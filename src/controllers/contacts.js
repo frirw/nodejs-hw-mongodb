@@ -1,6 +1,7 @@
 import createHttpError from 'http-errors';
 import { getAllContacts, getContactById, addContact, updateContact, deleteContactById } from '../services/contacts.js';
 
+
 export const getContactsController = async (req, res) => {
   const {
     page = 1,
@@ -10,6 +11,7 @@ export const getContactsController = async (req, res) => {
   } = req.query;
 
   const result = await getAllContacts({
+    userId: req.user._id,
     page: Number(page),
     perPage: Number(perPage),
     sortBy,
@@ -22,6 +24,7 @@ export const getContactsController = async (req, res) => {
     data: result,
   });
 };
+
 
 export const getContactByIdController = async (req, res) => {
   const { id } = req.params;
@@ -38,14 +41,27 @@ export const getContactByIdController = async (req, res) => {
   });
 };
 
-export const addContactController = async (req, res) => {
-  const data = await addContact(req.body);
-  res.status(201).json({
-    status: 201,
-    message: "Successfully created a contact!",
-    data,
-  });
+
+export const addContactController = (req, res, next) => {
+  const contactData = {
+    ...req.body,
+    userId: req.user._id,
+  };
+
+  addContact(contactData, req.user._id)
+    .then((newContact) => {
+      res.status(201).json({
+        status: 201,
+        message: "Successfully created a contact!",
+        data: newContact,
+      });
+    })
+    .catch((error) => {
+      next(error);
+    });
 };
+
+
 
 export const patchContactController = async (req, res) => {
   const { id } = req.params;

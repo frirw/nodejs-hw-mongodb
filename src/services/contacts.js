@@ -1,16 +1,23 @@
 import { ContactsCollection } from '../db/models/contacts.js';
 
-export const getAllContacts = async ({ page, perPage, sortBy, sortOrder }) => {
+export const getAllContacts = async ({
+  userId,
+  page,
+  perPage,
+  sortBy,
+  sortOrder,
+}) => {
   const skip = (page - 1) * perPage;
   const sortDirection = sortOrder === 'desc' ? -1 : 1;
 
-  const totalItems = await ContactsCollection.countDocuments();
-  const totalPages = Math.ceil(totalItems / perPage);
+const totalItems = await ContactsCollection.countDocuments({ userId });
+const totalPages = Math.ceil(totalItems / perPage);
 
-  const contacts = await ContactsCollection.find()
-    .sort({ [sortBy]: sortDirection })
-    .skip(skip)
-    .limit(perPage);
+const contacts = await ContactsCollection.find({ userId })
+  .sort({ [sortBy]: sortDirection })
+  .skip(skip)
+  .limit(perPage);
+
 
   return {
     data: contacts,
@@ -28,22 +35,31 @@ export const getContactById = async (id) => {
   return contact;
 };
 
-export const addContact = payload => ContactsCollection.create(payload);
+export const addContact = async (contactData, userId) => {
+  const newContact = await ContactsCollection.create({ ...contactData, userId });
+  return {
+    id: newContact._id,
+    name: newContact.name,
+    email: newContact.email,
+    phone: newContact.phone,
+    userId: newContact.userId,
+  };
+};
+
 
 export const updateContact = async (_id, payload) => {
   const updatedContact = await ContactsCollection.findByIdAndUpdate(
     _id,
     payload,
-    { new: true }
+    { new: true },
   );
   return updatedContact;
 };
 
+export const deleteContactById = async (id) => {
+  const contact = await ContactsCollection.findOneAndDelete({
+    _id: id,
+  });
 
-  export const deleteContactById = async (id) => {
-    const contact = await ContactsCollection.findOneAndDelete({
-      _id: id,
-    });
-  
-    return contact;
-  };
+  return contact;
+};
