@@ -10,14 +10,13 @@ export const getAllContacts = async ({
   const skip = (page - 1) * perPage;
   const sortDirection = sortOrder === 'desc' ? -1 : 1;
 
-const totalItems = await ContactsCollection.countDocuments({ userId });
-const totalPages = Math.ceil(totalItems / perPage);
+  const totalItems = await ContactsCollection.countDocuments({ userId });
+  const totalPages = Math.ceil(totalItems / perPage);
 
-const contacts = await ContactsCollection.find({ userId })
-  .sort({ [sortBy]: sortDirection })
-  .skip(skip)
-  .limit(perPage);
-
+  const contacts = await ContactsCollection.find({ userId })
+    .sort({ [sortBy]: sortDirection })
+    .skip(skip)
+    .limit(perPage);
 
   return {
     data: contacts,
@@ -30,35 +29,32 @@ const contacts = await ContactsCollection.find({ userId })
   };
 };
 
-export const getContactById = async (id) => {
-  const contact = await ContactsCollection.findById(id);
+export const getContactById = async (id, userId) => {
+  const contact = await ContactsCollection.findOne({ _id: id, userId });
   return contact;
 };
 
 export const addContact = async (contactData, userId) => {
-  const newContact = await ContactsCollection.create({ ...contactData, userId });
-  return {
-    id: newContact._id,
-    name: newContact.name,
-    email: newContact.email,
-    phone: newContact.phone,
-    userId: newContact.userId,
-  };
+  const newContact = await ContactsCollection.create({
+    ...contactData,
+    userId,
+  });
+  return newContact;
 };
 
-
-export const updateContact = async (_id, payload) => {
-  const updatedContact = await ContactsCollection.findByIdAndUpdate(
-    _id,
+export const updateContact = async (_id, payload, userId) => {
+  const updatedContact = await ContactsCollection.findOneAndUpdate(
+    { _id, userId },
     payload,
     { new: true },
   );
   return updatedContact;
 };
 
-export const deleteContactById = async (id) => {
+export const deleteContactById = async (id, userId) => {
   const contact = await ContactsCollection.findOneAndDelete({
     _id: id,
+    userId,
   });
 
   return contact;
